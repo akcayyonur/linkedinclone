@@ -1,11 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../../lib/axios";
 import { Link } from "react-router-dom";
-import { Bell, Home, LogOut, User, Users, Briefcase } from "lucide-react";
+import { Bell, Home, LogOut, User, Users, Briefcase, Search as SearchIcon } from "lucide-react";
+import UserSearch from "../UserSearch";
+import { useState } from "react";
 
 const Navbar = () => {
 	const { data: authUser } = useQuery({ queryKey: ["authUser"] });
 	const queryClient = useQueryClient();
+	const [showMobileSearch, setShowMobileSearch] = useState(false);
 
 	const { data: notifications } = useQuery({
 		queryKey: ["notifications"],
@@ -32,15 +35,32 @@ const Navbar = () => {
 	return (
 		<nav className='bg-secondary shadow-md sticky top-0 z-10'>
 			<div className='max-w-7xl mx-auto px-4'>
+				{/* Normal Navbar */}
 				<div className='flex justify-between items-center py-3'>
 					<div className='flex items-center space-x-4'>
 						<Link to='/'>
 							<img className='h-8 rounded' src='/small-logo.png' alt='LinkedIn' />
 						</Link>
+						
+						{/* Desktop Arama çubuğu */}
+						{authUser && (
+							<div className="hidden md:block w-64 lg:w-80">
+								<UserSearch />
+							</div>
+						)}
 					</div>
 					<div className='flex items-center gap-2 md:gap-6'>
 						{authUser ? (
 							<>
+								{/* Mobil Arama Butonu */}
+								<button 
+									className='md:hidden text-neutral flex flex-col items-center'
+									onClick={() => setShowMobileSearch(!showMobileSearch)}
+								>
+									<SearchIcon size={20} />
+									<span className='text-xs'>Search</span>
+								</button>
+
 								<Link to={"/"} className='text-neutral flex flex-col items-center'>
 									<Home size={20} />
 									<span className='text-xs hidden md:block'>Home</span>
@@ -100,6 +120,13 @@ const Navbar = () => {
 						)}
 					</div>
 				</div>
+				
+				{/* Mobil Arama Çubuğu */}
+				{authUser && showMobileSearch && (
+					<div className="md:hidden py-2 pb-3">
+						<UserSearch />
+					</div>
+				)}
 			</div>
 		</nav>
 	);

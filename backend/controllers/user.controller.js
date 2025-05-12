@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import cloudinary from "../lib/cloudinary.js";
 
+// Tüm controller fonksiyonlarını dışa aktarıyoruz
 export const getSuggestedConnections = async (req, res) => {
 	try {
 		const currentUser = await User.findById(req.user._id).select("connections");
@@ -22,6 +23,7 @@ export const getSuggestedConnections = async (req, res) => {
 	}
 };
 
+// Bu fonksiyon doğru dışa aktarıldığından emin olun
 export const getPublicProfile = async (req, res) => {
 	try {
 		const user = await User.findOne({ username: req.params.username }).select("-password");
@@ -77,6 +79,42 @@ export const updateProfile = async (req, res) => {
 		res.json(user);
 	} catch (error) {
 		console.error("Error in updateProfile controller:", error);
+		res.status(500).json({ message: "Server error" });
+	}
+};
+
+export const searchUsers = async (req, res) => {
+	try {
+		const { query } = req.query;
+		
+		console.log("Received search query:", query);
+		
+		if (!query) {
+			console.log("Search query is empty");
+			return res.status(400).json({ message: "Search query is required" });
+		}
+		
+		// Regex kullanarak isim, username veya headline'da arama yapma
+		const searchParams = {
+			$or: [
+				{ name: { $regex: query, $options: "i" } },
+				{ username: { $regex: query, $options: "i" } },
+				{ headline: { $regex: query, $options: "i" } }
+			],
+			_id: { $ne: req.user._id } // Kendimizi aramalarda göstermemek için
+		};
+		
+		console.log("Search parameters:", JSON.stringify(searchParams));
+		
+		const users = await User.find(searchParams)
+		.select("name username profilePicture headline connections")
+		.limit(10);
+		
+		console.log(`Found ${users.length} users for query "${query}"`);
+		
+		res.status(200).json(users);
+	} catch (error) {
+		console.error("Error in searchUsers controller:", error);
 		res.status(500).json({ message: "Server error" });
 	}
 };
